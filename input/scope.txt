@@ -1,0 +1,14 @@
+# Intentionally vulnerable public demo targets used by the workshop.
+# Nuclei: reliable exposure/misconfiguration findings.
+http://rest.vulnweb.com/
+
+# JavaScript review: external extensionless JavaScript with a deliberate DOM security issue.
+https://public-firing-range.appspot.com/dom/toxicdom/external/localStorage/function/innerHtml
+
+# Example scope formats. Replace or add only targets you are authorised to test.
+# *.example.com
+# portal.example.org
+# https://api.example.net/v1
+# 192.0.2.10
+# 192.0.2.0/28
+# example.com/.org

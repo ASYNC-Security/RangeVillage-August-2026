@@ -1,0 +1,334 @@
+{
+  "name": "RV Engineering Bug Bounty Workflow - Core",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "RV Engineering Bug Bounty Workflow",
+        "formDescription": "Click Start to begin. Each review checkpoint will appear in this form tab.",
+        "formFields": {},
+        "options": {
+          "buttonLabel": "Start"
+        }
+      },
+      "id": "910faa9c-1a9a-4e43-aae3-19b622d3e990",
+      "name": "Start Workshop",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        -2100,
+        0
+      ],
+      "webhookId": "17ae599e-cc8f-454b-ab86-41fe8770fb4c"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "06c8d363-4c1b-4349-bdcc-5b90d7820fcd",
+              "name": "scope_file",
+              "value": "input/scope.txt",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "39a4e09f-bfff-4a54-a14c-e63eec4b2980",
+      "name": "Set Scope File",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "command": "=python3 scripts/sort-scope.py --input \"{{ $json.scope_file }}\" --output-dir output"
+      },
+      "id": "50254f77-b3af-47e7-bb2c-db27837b43f5",
+      "name": "Sort Scope",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        -1660,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "command": "bash scripts/subfinder.sh output/wildcard-domains.txt output/subdomains.txt"
+      },
+      "id": "8cc085ae-0a30-4601-a511-4589ba1f5418",
+      "name": "Run Subfinder",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        -1220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "command": "python3 scripts/build-targets.py --subdomains output/subdomains.txt --direct output/direct-targets.txt --output output/targets.txt"
+      },
+      "id": "bc07729e-1f25-4999-b26c-c04a0d0818c0",
+      "name": "Build Target List",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        -1000,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "command": "bash scripts/httpx.sh output/targets.txt output/live-urls.txt"
+      },
+      "id": "a7c14883-39fb-48f0-a5a2-c6cc9213b54f",
+      "name": "Run httpx",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        -780,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "command": "bash scripts/katana.sh output/live-urls.txt output/discovered-urls.txt"
+      },
+      "id": "3e3fd0b4-a5ce-484b-a5ea-17775408bca2",
+      "name": "Run Katana",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        -340,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "command": "python3 scripts/sort-urls.py --live output/live-urls.txt --discovered output/discovered-urls.txt --output-dir output --max-javascript-candidates-per-host 10"
+      },
+      "id": "4dca4a22-574d-4a34-9b08-65ae2eac7fb9",
+      "name": "Sort Crawled URLs",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        -120,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "command": "bash scripts/nuclei.sh output/nuclei-targets.txt results/nuclei-findings.jsonl"
+      },
+      "id": "41fec64b-e085-4939-a428-a84bb3b4f7f5",
+      "name": "Run Nuclei",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        320,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "page",
+        "defineForm": "fields",
+        "formFields": {},
+        "options": {
+          "formTitle": "Review Scope",
+          "formDescription": "Review output/wildcard-domains.txt, output/direct-targets.txt, and output/unsupported-scope.txt. You may remove entries you do not want to pass to the next step. Continue only when the remaining entries match the authorised scope.",
+          "buttonLabel": "Continue"
+        }
+      },
+      "id": "a41efd70-bb7e-46b9-b2e1-e8e0b9c32611",
+      "name": "Review Scope",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        -1440,
+        0
+      ],
+      "webhookId": "70279e93-f600-4af8-9bd2-623f87ec10f2"
+    },
+    {
+      "parameters": {
+        "operation": "page",
+        "defineForm": "fields",
+        "formFields": {},
+        "options": {
+          "formTitle": "Review Live Targets",
+          "formDescription": "Review output/live-urls.txt. You may remove URLs you do not want Katana to crawl. Continue only when the remaining responding URLs are expected and in scope.",
+          "buttonLabel": "Continue"
+        }
+      },
+      "id": "0771686a-dc05-4584-b995-13246ef12a46",
+      "name": "Review Live Targets",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        -560,
+        0
+      ],
+      "webhookId": "d9551daf-7c00-47f4-bfba-45ee3f57ddb7"
+    },
+    {
+      "parameters": {
+        "operation": "page",
+        "defineForm": "fields",
+        "formFields": {},
+        "options": {
+          "formTitle": "Review Target Lists",
+          "formDescription": "Review output/nuclei-targets.txt, output/javascript-urls.txt, and output/ignored-urls.txt. nuclei-targets.txt feeds Nuclei; javascript-urls.txt contains per-FQDN JavaScript candidates prioritised toward application code, with vendor/framework files considered last; ignored-urls.txt records out-of-scope, static, malformed, and excess candidates. Remove any entries you do not want to pass forward, then click Continue.",
+          "buttonLabel": "Continue"
+        }
+      },
+      "id": "94641aa7-01dd-4528-b4ae-b86d9abd6f4e",
+      "name": "Review Target Lists",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        100,
+        0
+      ],
+      "webhookId": "e6721e6f-9bd1-4e90-a7a3-e48f0e83f412"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Set Scope File": {
+      "main": [
+        [
+          {
+            "node": "Sort Scope",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sort Scope": {
+      "main": [
+        [
+          {
+            "node": "Review Scope",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Subfinder": {
+      "main": [
+        [
+          {
+            "node": "Build Target List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Target List": {
+      "main": [
+        [
+          {
+            "node": "Run httpx",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run httpx": {
+      "main": [
+        [
+          {
+            "node": "Review Live Targets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Katana": {
+      "main": [
+        [
+          {
+            "node": "Sort Crawled URLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sort Crawled URLs": {
+      "main": [
+        [
+          {
+            "node": "Review Target Lists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Review Scope": {
+      "main": [
+        [
+          {
+            "node": "Run Subfinder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Review Live Targets": {
+      "main": [
+        [
+          {
+            "node": "Run Katana",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start Workshop": {
+      "main": [
+        [
+          {
+            "node": "Set Scope File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Review Target Lists": {
+      "main": [
+        [
+          {
+            "node": "Run Nuclei",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f3754f53-8fd4-4cf1-997e-4b5c3a26b3e9",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
